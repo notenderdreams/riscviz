@@ -71,7 +71,9 @@ impl Cpu {
             Instruction::Andi { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] & imm,
             Instruction::Ori { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] | imm,
             Instruction::Xori { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] ^ imm,
-            Instruction::Slti { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] << imm,
+            Instruction::Slti { rd, rs1, imm } => {
+                self.regs[*rd] = if self.regs[*rs1] < *imm { 1 } else { 0 };
+            }
             Instruction::Print { rs } => print!("x{}: {}\n ",rs, self.regs[*rs]),
             Instruction::Sw { rs1, rs2, imm } => {
                 let addr = (self.regs[*rs2] + imm) as u32;
