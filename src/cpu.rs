@@ -85,6 +85,14 @@ impl Cpu {
                     next_pc = (self.pc as i32 + offset) as usize;
                 }
             }
+            Instruction::Jal { rd, offset}=>{
+                self.regs[*rd] = (self.pc + 1) as i32 ;
+                next_pc = (self.pc as i32 + offset) as usize;
+            }
+            Instruction::Jalr {rd, rs1, imm}=>{
+                self.regs[*rd] = (self.pc +1) as i32 ;
+                next_pc = (self.regs[*rs1] as i32 + imm) as usize;
+            }
         }
         self.regs[0] = 0;
         self.pc = next_pc;
@@ -235,13 +243,13 @@ mod tests {
     }
     #[test]
     fn test_while_loop() {
-        // C equivalent:
-        // int i = 0;
-        // while (i < 10) {
-        //     i++;
-        // }
         let mut cpu = Cpu::default();
+
         cpu.load_program(vec![
+            // int i = 0;
+            // while (i < 10) {
+            //     i++;
+            // }
             Instruction::Addi { rd: 1, rs1: 0, imm: 0 },
             Instruction::Addi { rd: 2, rs1: 0, imm: 10 },
             Instruction::Bge { rs1: 1, rs2: 2, offset: 2 },
@@ -255,13 +263,13 @@ mod tests {
 
     #[test]
     fn test_for_loop() {
-        // C equivalent:
-        // int sum = 0;
-        // for (int i = 0; i < 5; i++) {
-        //     sum += i;
-        // }
         let mut cpu = Cpu::default();
+
         cpu.load_program(vec![
+            // int sum = 0;
+            // for (int i = 0; i < 5; i++) {
+            //     sum += i;
+            // }
             Instruction::Addi { rd: 1, rs1: 0, imm: 0 },
             Instruction::Addi { rd: 2, rs1: 0, imm: 5 },
             Instruction::Addi { rd: 3, rs1: 0, imm: 0 },
@@ -273,5 +281,63 @@ mod tests {
 
         while cpu.execute_next().unwrap() {}
         assert_eq!(cpu.regs[3], 10);
+    }
+    #[test]
+    fn test_non_leaf_function() {
+        let mut cpu = Cpu::default();
+
+        cpu.load_program(vec![
+            // int bar() { return 41; }
+            Instruction::Addi { rd: 10, rs1: 0, imm: 41 },   // 0
+            Instruction::Jalr { rd: 0, rs1: 1, imm: 0 },     // 1: return
+
+            // int foo() { return bar() + 1; }
+            Instruction::Addi { rd: 2, rs1: 2, imm: -4 },    // 2: sp -= 4
+            Instruction::Sw   { rs1: 1, rs2: 2, imm: 0 },    // 3: save ra
+            Instruction::Jal  { rd: 1, offset: -4 },         // 4: call bar (→0)
+            Instruction::Addi { rd: 10, rs1: 10, imm: 1 },   // 5: result += 1
+            Instruction::Lw   { rd: 1, rs1: 2, imm: 0 },     // 6: restore ra
+            Instruction::Addi { rd: 2, rs1: 2, imm: 4 },     // 7: sp += 4
+            Instruction::Jalr { rd: 0, rs1: 1, imm: 0 },     // 8: return
+
+            // int main() { foo(); }
+            Instruction::Jal  { rd: 1, offset: -7 },         // 9: call foo (→2)
+        ]);
+
+        cpu.pc = 9; // entry point
+        while cpu.execute_next().unwrap() {}
+        assert_eq!(cpu.regs[10], 42);
+    }
+    #[test]
+    fn test_simple_recursion() {
+        let mut cpu = Cpu::default();
+
+        cpu.load_program(vec![
+            // int f(int n) {
+            //     if (n == 0) return 0;
+            //     return 1 + f(n - 1);
+            // }
+            Instruction::Beq  { rs1: 10, rs2: 0, offset: 9 },  // 0: if n==0 goto base
+            Instruction::Addi { rd: 2, rs1: 2, imm: -4 },      // 1: sp -= 4
+            Instruction::Sw   { rs1: 1, rs2: 2, imm: 0 },      // 2: save ra
+            Instruction::Addi { rd: 10, rs1: 10, imm: -1 },    // 3: n -= 1
+            Instruction::Jal  { rd: 1, offset: -4 },           // 4: call f(n-1)
+            Instruction::Lw   { rd: 1, rs1: 2, imm: 0 },       // 5: restore ra
+            Instruction::Addi { rd: 2, rs1: 2, imm: 4 },       // 6: sp += 4
+            Instruction::Addi { rd: 10, rs1: 10, imm: 1 },     // 7: result += 1
+            Instruction::Jalr { rd: 0, rs1: 1, imm: 0 },       // 8: return
+
+            // base case: return 0
+            Instruction::Addi { rd: 10, rs1: 0, imm: 0 },      // 9
+            Instruction::Jalr { rd: 0, rs1: 1, imm: 0 },       // 10
+
+            // int main() { f(3); }
+            Instruction::Addi { rd: 10, rs1: 0, imm: 3 },      // 11
+            Instruction::Jal  { rd: 1, offset: -12 },          // 12: call f
+        ]);
+
+        cpu.pc = 11; // entry point
+        while cpu.execute_next().unwrap() {}
+        assert_eq!(cpu.regs[10], 3);
     }
 }
