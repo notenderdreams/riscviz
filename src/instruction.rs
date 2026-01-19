@@ -11,28 +11,31 @@ pub enum Instruction {
     Sll { rd: usize, rs1: usize, rs2: usize },
     Srl { rd: usize, rs1: usize, rs2: usize },
     Sra { rd: usize, rs1: usize, rs2: usize },
-    
+
     // I-Format
     Addi { rd: usize, rs1: usize, imm: i32 },
     Andi { rd: usize, rs1: usize, imm: i32 },
     Ori { rd: usize, rs1: usize, imm: i32 },
     Xori { rd: usize, rs1: usize, imm: i32 },
+    Slli { rd: usize, rs1: usize, imm: i32 },
+    Srli { rd: usize, rs1: usize, imm: i32 },
+    Srai { rd: usize, rs1: usize, imm: i32 },
     Slti { rd: usize, rs1: usize, imm: i32 },
     Lw { rd: usize, rs1: usize, imm: i32 },
     Jalr { rd: usize, rs1: usize, imm: i32 },
-    
+
     // S-Format
     Sw { rs1: usize, rs2: usize, imm: i32 },
-    
+
     // B-type
     Beq { rs1: usize, rs2: usize, offset: i32 }, // equal
     Bne { rs1: usize, rs2: usize, offset: i32 }, // not equal
     Blt { rs1: usize, rs2: usize, offset: i32 }, // less than
     Bge { rs1: usize, rs2: usize, offset: i32 }, // greater/equal
-    
+
     // J-Format
     Jal { rd: usize, offset: i32 },
-    
+
     // For Debug
     Print { rs: usize },
 }

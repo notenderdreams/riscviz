@@ -35,7 +35,6 @@ impl Cpu {
     }
     pub fn load_program(&mut self, program: Vec<Instruction>){
         self.program = program;
-        self.pc = 0;
     }
 
     pub fn execute_next(&mut self) -> Result<bool, CpuError> {
@@ -71,6 +70,9 @@ impl Cpu {
             Instruction::Andi { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] & imm,
             Instruction::Ori { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] | imm,
             Instruction::Xori { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] ^ imm,
+            Instruction::Slli { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] << imm,
+            Instruction::Srli { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] >> imm,
+            Instruction::Srai { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] >> imm,
             Instruction::Slti { rd, rs1, imm } => {
                 self.regs[*rd] = if self.regs[*rs1] < *imm { 1 } else { 0 };
             }

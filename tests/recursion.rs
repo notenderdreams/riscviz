@@ -1,15 +1,10 @@
-use riscviz::cpu::Cpu;
 use riscviz::instruction::Instruction;
+use riscviz::run_program;
 
 #[test]
 fn test_simple_recursion() {
-    let mut cpu = Cpu::default();
+    let cpu = run_program!(vec![
 
-    cpu.load_program(vec![
-        // int f(int n) {
-        //     if (n == 0) return 0;
-        //     return 1 + f(n - 1);
-        // }
         Instruction::Beq  { rs1: 10, rs2: 0, offset: 9 },  // 0: if n==0 goto base
         Instruction::Addi { rd: 2, rs1: 2, imm: -4 },      // 1: sp -= 4
         Instruction::Sw   { rs1: 1, rs2: 2, imm: 0 },      // 2: save ra
@@ -27,9 +22,7 @@ fn test_simple_recursion() {
         // int main() { f(3); }
         Instruction::Addi { rd: 10, rs1: 0, imm: 3 },      // 11
         Instruction::Jal  { rd: 1, offset: -12 },          // 12: call f
-    ]);
-
-    cpu.pc = 11; // entry point
-    while cpu.execute_next().unwrap() {}
+    ],11);
+    // entry point = 11
     assert_eq!(cpu.regs[10], 3);
 }

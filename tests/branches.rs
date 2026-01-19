@@ -1,5 +1,6 @@
 use riscviz::cpu::Cpu;
 use riscviz::instruction::Instruction;
+use riscviz::run_program;
 
 #[test]
 fn test_branch_not_equal_loop() {
@@ -17,15 +18,13 @@ fn test_branch_not_equal_loop() {
 
 #[test]
 fn test_branch_equal() {
-    let mut cpu = Cpu::default();
-    cpu.load_program(vec![
+    let cpu = run_program!(vec![
         Instruction::Addi { rd: 1, rs1: 0, imm: 5 },
         Instruction::Addi { rd: 2, rs1: 0, imm: 5 },
         Instruction::Beq { rs1: 1, rs2: 2, offset: 2 },
         Instruction::Addi { rd: 3, rs1: 0, imm: 99 },
         Instruction::Addi { rd: 4, rs1: 0, imm: 42 },
     ]);
-    while cpu.execute_next().unwrap() {}
     assert_eq!(cpu.regs[3], 0);
     assert_eq!(cpu.regs[4], 42);
 }

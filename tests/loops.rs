@@ -1,11 +1,9 @@
-use riscviz::cpu::Cpu;
 use riscviz::instruction::Instruction;
+use riscviz::run_program;
 
 #[test]
 fn test_while_loop() {
-    let mut cpu = Cpu::default();
-
-    cpu.load_program(vec![
+    let cpu = run_program!(vec![
         // int i = 0;
         // while (i < 10) {
         //     i++;
@@ -17,15 +15,12 @@ fn test_while_loop() {
         Instruction::Blt { rs1: 1, rs2: 2, offset: -2 },
     ]);
 
-    while cpu.execute_next().unwrap() {}
     assert_eq!(cpu.regs[1], 10);
 }
 
 #[test]
 fn test_for_loop() {
-    let mut cpu = Cpu::default();
-
-    cpu.load_program(vec![
+    let cpu = run_program!(vec![
         // int sum = 0;
         // for (int i = 0; i < 5; i++) {
         //     sum += i;
@@ -39,6 +34,5 @@ fn test_for_loop() {
         Instruction::Blt { rs1: 1, rs2: 2, offset: -3 },
     ]);
 
-    while cpu.execute_next().unwrap() {}
     assert_eq!(cpu.regs[3], 10);
 }

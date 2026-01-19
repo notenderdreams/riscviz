@@ -1,6 +1,7 @@
 use riscviz::cpu::Cpu;
 use riscviz::instruction::Instruction;
 use riscviz::cpu::CpuError;
+use riscviz::run_program;
 
 #[test]
 fn test_div_by_zero() {
@@ -14,8 +15,7 @@ fn test_div_by_zero() {
 
 #[test]
 fn test_arithmetic_ops() {
-    let mut cpu = Cpu::default();
-    cpu.load_program(vec![
+    let cpu = run_program!(vec![
         Instruction::Addi { rd: 1, rs1: 0, imm: 10 },
         Instruction::Addi { rd: 2, rs1: 0, imm: 5 },
         Instruction::Add { rd: 3, rs1: 1, rs2: 2 },
@@ -29,9 +29,7 @@ fn test_arithmetic_ops() {
         Instruction::Srl { rd: 11, rs1: 1, rs2: 2 },
         Instruction::Sra { rd: 12, rs1: 1, rs2: 2 },
     ]);
-
-    while cpu.execute_next().unwrap() {}
-
+    
     assert_eq!(cpu.regs[3], 15);
     assert_eq!(cpu.regs[4], 5);
     assert_eq!(cpu.regs[5], 50);
@@ -46,10 +44,8 @@ fn test_arithmetic_ops() {
 
 #[test]
 fn test_x0_immutable() {
-    let mut cpu = Cpu::default();
-    cpu.load_program(vec![
+    let cpu = run_program!(vec![
         Instruction::Addi { rd: 0, rs1: 0, imm: 999 },
     ]);
-    cpu.execute_next().unwrap();
     assert_eq!(cpu.regs[0], 0);
 }
