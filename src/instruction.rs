@@ -23,9 +23,15 @@ pub enum Instruction {
     Slti { rd: usize, rs1: usize, imm: i32 },
     Lw { rd: usize, rs1: usize, imm: i32 },
     Jalr { rd: usize, rs1: usize, imm: i32 },
+    Lb { rd: usize, rs1: usize, imm: i32 },
+    Lh { rd: usize, rs1: usize, imm: i32 },
+    Lbu { rd: usize, rs1: usize, imm: i32 },
+    Lhu { rd: usize, rs1: usize, imm: i32 },
 
     // S-Format
     Sw { rs1: usize, rs2: usize, imm: i32 },
+    Sb { rs1: usize, rs2: usize, imm: i32 },
+    Sh { rs1: usize, rs2: usize, imm: i32 },
 
     // B-type
     Beq { rs1: usize, rs2: usize, offset: i32 }, // equal

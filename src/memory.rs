@@ -42,6 +42,30 @@ impl Memory {
         self.data[addr] = val;
         Ok(())
     }
+    pub fn read_halfword(&self, addr: u32) -> Result<i16, MemoryError> {
+        if addr & 1 != 0 {
+            return Err(MemoryError::MisalignedAccess(addr));
+        }
+        let addr = addr as usize;
+        if addr + 1 >= self.size() {
+            return Err(MemoryError::OutOfBounds(addr as u32));
+        }
+        Ok(i16::from_le_bytes([self.data[addr], self.data[addr + 1]]))
+    }
+
+    pub fn write_halfword(&mut self, addr: u32, val: u16) -> Result<(), MemoryError> {
+        if addr & 1 != 0 {
+            return Err(MemoryError::MisalignedAccess(addr));
+        }
+        let addr = addr as usize;
+        if addr + 1 >= self.size() {
+            return Err(MemoryError::OutOfBounds(addr as u32));
+        }
+        let bytes = val.to_le_bytes();
+        self.data[addr] = bytes[0];
+        self.data[addr + 1] = bytes[1];
+        Ok(())
+    }
     pub fn read_word(&self, addr: u32) -> Result<i32, MemoryError> {
         if !addr.is_multiple_of(4) {
             return Err(MemoryError::MisalignedAccess(addr));

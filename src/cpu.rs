@@ -33,7 +33,7 @@ impl Cpu {
         cpu.regs[2] = cpu.memory.size() as i32;
         cpu
     }
-    pub fn load_program(&mut self, program: Vec<Instruction>){
+    pub fn load_program(&mut self, program: Vec<Instruction>) {
         self.program = program;
     }
 
@@ -71,48 +71,79 @@ impl Cpu {
             Instruction::Ori { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] | imm,
             Instruction::Xori { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] ^ imm,
             Instruction::Slli { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] << imm,
-            Instruction::Srli { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] >> imm,
+            Instruction::Srli { rd, rs1, imm } => {
+                self.regs[*rd] = ((self.regs[*rs1] as u32) >> imm) as i32
+            }
             Instruction::Srai { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] >> imm,
             Instruction::Slti { rd, rs1, imm } => {
                 self.regs[*rd] = if self.regs[*rs1] < *imm { 1 } else { 0 };
             }
-            Instruction::Print { rs } => print!("x{}: {}\n ",rs, self.regs[*rs]),
+
+            Instruction::Sb { rs1, rs2, imm } => {
+                let addr = (self.regs[*rs2] + imm) as u32;
+                self.memory
+                    .write_byte(addr, (self.regs[*rs1] & 0xFF) as u8)?
+            }
+            Instruction::Sh { rs1, rs2, imm } => {
+                let addr = (self.regs[*rs2] + imm) as u32;
+                self.memory
+                    .write_halfword(addr, (self.regs[*rs1] & 0xFFFF) as u16)?
+            }
             Instruction::Sw { rs1, rs2, imm } => {
                 let addr = (self.regs[*rs2] + imm) as u32;
                 self.memory.write_word(addr, self.regs[*rs1])?
+            }
+
+            Instruction::Lb { rd, rs1, imm } => {
+                let addr = (self.regs[*rs1] + imm) as u32;
+                self.regs[*rd] = self.memory.read_byte(addr)? as i32; // sign-extend i8 -> i32
+            }
+            Instruction::Lbu { rd, rs1, imm } => {
+                let addr = (self.regs[*rs1] + imm) as u32;
+                self.regs[*rd] = self.memory.read_byte(addr)? as u8 as i32; // zero-extend
+            }
+            Instruction::Lh { rd, rs1, imm } => {
+                let addr = (self.regs[*rs1] + imm) as u32;
+                self.regs[*rd] = self.memory.read_halfword(addr)? as i32; // sign-extend i16 -> i32
+            }
+            Instruction::Lhu { rd, rs1, imm } => {
+                let addr = (self.regs[*rs1] + imm) as u32;
+                self.regs[*rd] = self.memory.read_halfword(addr)? as u16 as i32; // zero-extend
             }
             Instruction::Lw { rd, rs1, imm } => {
                 let addr = (self.regs[*rs1] + imm) as u32;
                 self.regs[*rd] = self.memory.read_word(addr)?
             }
-            Instruction::Beq {rs1, rs2, offset}=>{
+
+            Instruction::Beq { rs1, rs2, offset } => {
                 if self.regs[*rs1] == self.regs[*rs2] {
                     next_pc = (self.pc as i32 + offset) as usize;
                 }
             }
-            Instruction::Bne {rs1, rs2, offset}=>{
+            Instruction::Bne { rs1, rs2, offset } => {
                 if self.regs[*rs1] != self.regs[*rs2] {
                     next_pc = (self.pc as i32 + offset) as usize;
                 }
             }
-            Instruction::Blt {rs1, rs2, offset}=>{
+            Instruction::Blt { rs1, rs2, offset } => {
                 if self.regs[*rs1] < self.regs[*rs2] {
                     next_pc = (self.pc as i32 + offset) as usize;
                 }
             }
-            Instruction::Bge {rs1, rs2, offset}=>{
+            Instruction::Bge { rs1, rs2, offset } => {
                 if self.regs[*rs1] >= self.regs[*rs2] {
                     next_pc = (self.pc as i32 + offset) as usize;
                 }
             }
-            Instruction::Jal { rd, offset}=>{
-                self.regs[*rd] = (self.pc + 1) as i32 ;
+            Instruction::Jal { rd, offset } => {
+                self.regs[*rd] = (self.pc + 1) as i32;
                 next_pc = (self.pc as i32 + offset) as usize;
             }
-            Instruction::Jalr {rd, rs1, imm}=>{
-                self.regs[*rd] = (self.pc +1) as i32 ;
+            Instruction::Jalr { rd, rs1, imm } => {
+                self.regs[*rd] = (self.pc + 1) as i32;
                 next_pc = (self.regs[*rs1] + imm) as usize;
             }
+            Instruction::Print { rs } => print!("x{}: {}\n ", rs, self.regs[*rs]),
         }
         self.regs[0] = 0;
         self.pc = next_pc;
