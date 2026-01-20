@@ -98,6 +98,12 @@ impl Cpu {
             Instruction::Sra { rd, rs1, rs2 } => {
                 self.regs[*rd] = self.regs[*rs1] >> (self.regs[*rs2] & 0x1F)
             }
+            Instruction::Slt { rd, rs1, rs2 } => {
+                self.regs[*rd] = if self.regs[*rs1] < self.regs[*rs2] { 1 }else { 0 }
+            }
+            Instruction::Sltu { rd, rs1, rs2 } => {
+                self.regs[*rd] = if (self.regs[*rs1] as u32 )< (self.regs[*rs2] as u32) { 1 }else { 0 }
+            }
             Instruction::Addi { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] + imm,
             Instruction::Andi { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] & imm,
             Instruction::Ori { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] | imm,
@@ -109,6 +115,9 @@ impl Cpu {
             Instruction::Srai { rd, rs1, imm } => self.regs[*rd] = self.regs[*rs1] >> imm,
             Instruction::Slti { rd, rs1, imm } => {
                 self.regs[*rd] = if self.regs[*rs1] < *imm { 1 } else { 0 };
+            }
+            Instruction::Sltiu { rd, rs1, imm } => {
+                self.regs[*rd] = if (self.regs[*rs1] as u32 )< (*imm as u32) { 1 }else { 0 }
             }
 
             Instruction::Sb { rs1, rs2, imm } => {
@@ -162,8 +171,18 @@ impl Cpu {
                     next_pc = (self.pc as i32 + offset) as usize;
                 }
             }
+            Instruction::Bltu { rs1, rs2, offset } => {
+                if (self.regs[*rs1] as u32) < (self.regs[*rs2] as u32) {
+                    next_pc = (self.pc as i32 + offset) as usize;
+                }
+            }
             Instruction::Bge { rs1, rs2, offset } => {
                 if self.regs[*rs1] >= self.regs[*rs2] {
+                    next_pc = (self.pc as i32 + offset) as usize;
+                }
+            }
+            Instruction::Bgeu { rs1, rs2, offset } => {
+                if (self.regs[*rs1] as u32) >= (self.regs[*rs2] as u32) {
                     next_pc = (self.pc as i32 + offset) as usize;
                 }
             }
@@ -174,6 +193,12 @@ impl Cpu {
             Instruction::Jalr { rd, rs1, imm } => {
                 self.regs[*rd] = (self.pc + 1) as i32;
                 next_pc = (self.regs[*rs1] + imm) as usize;
+            }
+            Instruction::Lui { rd, imm } => {
+                self.regs[*rd] = imm << 12 ;
+            }
+            Instruction::Auipc { rd, imm } => {
+                self.regs[*rd] = (self.pc as i32).wrapping_add(imm << 12);
             }
             Instruction::Print { rs } => print!("x{}: {}\n ", rs, self.regs[*rs]),
         }

@@ -17,6 +17,8 @@ pub enum Instruction {
     Sll { rd: usize, rs1: usize, rs2: usize },
     Srl { rd: usize, rs1: usize, rs2: usize },
     Sra { rd: usize, rs1: usize, rs2: usize },
+    Slt { rd: usize, rs1: usize, rs2: usize },
+    Sltu { rd: usize, rs1: usize, rs2: usize },
 
     // I-Format
     Addi { rd: usize, rs1: usize, imm: i32 },
@@ -33,6 +35,7 @@ pub enum Instruction {
     Lh { rd: usize, rs1: usize, imm: i32 },
     Lbu { rd: usize, rs1: usize, imm: i32 },
     Lhu { rd: usize, rs1: usize, imm: i32 },
+    Sltiu { rd: usize, rs1: usize, imm: i32 },
 
     // S-Format
     Sw { rs1: usize, rs2: usize, imm: i32 },
@@ -40,13 +43,19 @@ pub enum Instruction {
     Sh { rs1: usize, rs2: usize, imm: i32 },
 
     // B-type
-    Beq { rs1: usize, rs2: usize, offset: i32 }, // equal
-    Bne { rs1: usize, rs2: usize, offset: i32 }, // not equal
-    Blt { rs1: usize, rs2: usize, offset: i32 }, // less than
-    Bge { rs1: usize, rs2: usize, offset: i32 }, // greater/equal
+    Beq { rs1: usize, rs2: usize, offset: i32 },
+    Bne { rs1: usize, rs2: usize, offset: i32 },
+    Blt { rs1: usize, rs2: usize, offset: i32 },
+    Bltu { rs1: usize, rs2: usize, offset: i32 },
+    Bge { rs1: usize, rs2: usize, offset: i32 },
+    Bgeu { rs1: usize, rs2: usize, offset: i32 },
 
     // J-Format
     Jal { rd: usize, offset: i32 },
+
+    // U-Format
+    Lui { rd: usize, imm: i32 },
+    Auipc { rd: usize, imm: i32 },
 
     // For Debug
     Print { rs: usize },
