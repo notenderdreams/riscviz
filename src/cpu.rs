@@ -4,8 +4,6 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum CpuError {
-    #[error("Division by zero")]
-    DivisionByZero,
     #[error(transparent)]
     MemoryError(#[from] MemoryError),
 }
@@ -48,11 +46,45 @@ impl Cpu {
             Instruction::Add { rd, rs1, rs2 } => self.regs[*rd] = self.regs[*rs1] + self.regs[*rs2],
             Instruction::Sub { rd, rs1, rs2 } => self.regs[*rd] = self.regs[*rs1] - self.regs[*rs2],
             Instruction::Mul { rd, rs1, rs2 } => self.regs[*rd] = self.regs[*rs1] * self.regs[*rs2],
+            Instruction::Mulh { rd, rs1, rs2 } => {
+                let result = self.regs[*rs1] as i64 * self.regs[*rs2] as i64;
+                self.regs[*rd] = ( result >> 32 )as i32;
+            }
+            Instruction::Mulhsu { rd, rs1, rs2 } => {
+                let result = self.regs[*rs1] as i64 * self.regs[*rs2] as u32 as i64;
+                self.regs[*rd] = ( result >> 32 )as i32;
+            }
+            Instruction::Mulhu { rd, rs1, rs2 } => {
+                let result = self.regs[*rs1] as u32 as  u64 * self.regs[*rs2] as u32 as u64;
+                self.regs[*rd] = ( result >> 32 )as i32;
+            }
             Instruction::Div { rd, rs1, rs2 } => {
-                if self.regs[*rs2] == 0 {
-                    return Err(CpuError::DivisionByZero);
+                self.regs[*rd] = if self.regs[*rs2] != 0 {
+                    self.regs[*rs1] / self.regs[*rs2]
+                } else {
+                    -1
                 }
-                self.regs[*rd] = self.regs[*rs1] / self.regs[*rs2]
+            }
+            Instruction::Divu { rd, rs1, rs2 } => {
+                self.regs[*rd] = if self.regs[*rs2] != 0 {
+                    ((self.regs[*rs1] as u32) / (self.regs[*rs2] as u32)) as i32
+                } else {
+                    -1
+                }
+            }
+            Instruction::Rem {rd, rs1, rs2} =>{
+                self.regs[*rd] = if self.regs[*rs2] == 0 {
+                    self.regs[*rs1]
+                }else{
+                    self.regs[*rs1] % self.regs[*rs2]
+                };
+            }
+            Instruction::Remu {rd, rs1, rs2} =>{
+                self.regs[*rd] = if self.regs[*rs2] == 0 {
+                    self.regs[*rs1]
+                }else{
+                    ((self.regs[*rs1] as u32) % (self.regs[*rs2] as u32)) as i32
+                };
             }
             Instruction::And { rd, rs1, rs2 } => self.regs[*rd] = self.regs[*rs1] & self.regs[*rs2],
             Instruction::Or { rd, rs1, rs2 } => self.regs[*rd] = self.regs[*rs1] | self.regs[*rs2],
