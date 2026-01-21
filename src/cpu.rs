@@ -34,6 +34,18 @@ impl Cpu {
     pub fn load_program(&mut self, program: Vec<Instruction>) {
         self.program = program;
     }
+    pub fn add_instruction(&mut self, inst: Instruction) {
+        self.program.push(inst);
+    }
+
+    pub fn print_instructions(&self) {
+        println!("\nInstructions:");
+        for (idx, inst) in self.program.iter().enumerate() {
+            let marker = if idx == self.pc { " -> " } else { "    " };
+            println!("{}{}: {:?}", marker, idx, inst);
+        }
+        println!();
+    }
 
     pub fn execute_next(&mut self) -> Result<bool, CpuError> {
         if self.pc >= self.program.len() {

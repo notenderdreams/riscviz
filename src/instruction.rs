@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Instruction {
     // R-Format
     Add { rd: usize, rs1: usize, rs2: usize },
@@ -57,6 +57,6 @@ pub enum Instruction {
     Lui { rd: usize, imm: i32 },
     Auipc { rd: usize, imm: i32 },
 
-    // For Debug
+    // Debug
     Print { rs: usize },
 }
