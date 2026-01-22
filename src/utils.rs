@@ -4,7 +4,7 @@ use crate::instruction::Instruction;
 // Test Utils
 pub fn run_program(program: Vec<Instruction>, entry: usize) -> Cpu {
     let mut cpu = Cpu::default();
-    cpu.load_program(program);
+    cpu.load_instructions(program);
     cpu.pc = entry;
     while cpu.execute_next().unwrap() {}
     cpu

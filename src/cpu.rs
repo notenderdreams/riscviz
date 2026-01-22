@@ -1,6 +1,7 @@
 use crate::instruction::Instruction;
 use crate::memory::{Memory, MemoryError};
 use thiserror::Error;
+use crate::asm_parser::Program;
 
 #[derive(Debug, Error)]
 pub enum CpuError {
@@ -31,8 +32,12 @@ impl Cpu {
         cpu.regs[2] = cpu.memory.size() as i32;
         cpu
     }
-    pub fn load_program(&mut self, program: Vec<Instruction>) {
+    pub fn load_instructions(&mut self, program: Vec<Instruction>) {
         self.program = program;
+    }
+    pub fn load_program(&mut self, program:Program){
+        self.program = program.instructions;
+        self.pc = *program.labels.get("_start").unwrap_or(&0);
     }
     pub fn add_instruction(&mut self, inst: Instruction) {
         self.program.push(inst);
@@ -212,7 +217,7 @@ impl Cpu {
             Instruction::Auipc { rd, imm } => {
                 self.regs[*rd] = (self.pc as i32).wrapping_add(imm << 12);
             }
-            Instruction::Print { rs } => print!("x{}: {}\n ", rs, self.regs[*rs]),
+            Instruction::Print { rs } => print!("x{}: {}\n", rs, self.regs[*rs]),
         }
         self.regs[0] = 0;
         self.pc = next_pc;

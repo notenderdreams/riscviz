@@ -1,5 +1,14 @@
+use std::collections::HashMap;
+use std::fs::File;
+use std::io;
+use std::io::BufRead;
 use std::str::FromStr;
 use crate::instruction::Instruction;
+
+pub struct Program {
+    pub instructions: Vec<Instruction>,
+    pub labels: HashMap<String, usize>,
+}
 
 fn parse_reg(reg: &str) -> Option<usize> {
     let reg = reg.trim();
@@ -71,7 +80,7 @@ macro_rules! parse_b_type {
         Some(Instruction::$variant {
             rs1: parse_reg($tokens.next()?)?,
             rs2: parse_reg($tokens.next()?)?,
-            offset: parse_imm($tokens.next()?)?,
+            offset:0,
         })
     };
 }
@@ -89,12 +98,12 @@ macro_rules! parse_j_type {
     ($tokens:ident, $variant:ident) => {
         Some(Instruction::$variant {
             rd: parse_reg($tokens.next()?)?,
-            offset: parse_imm($tokens.next()?)?,
+            offset: 0,
         })
     };
 }
 
-pub fn parse_line(line: &str) -> Option<Instruction> {
+pub fn parse_instruction(line: &str) -> Option<Instruction> {
     let line = line.split('#').next()?.trim();
     if line.is_empty() {
         return None;
@@ -176,3 +185,60 @@ pub fn parse_line(line: &str) -> Option<Instruction> {
     }
 }
 
+pub fn load_asm(path: &str)->io::Result<Program> {
+    let file = File::open(path)?;
+    let reader = io::BufReader::new(file);
+
+    let mut instructions:Vec<Instruction> = Vec::new();
+    let mut labels: HashMap<String,usize>= HashMap::new();
+    let mut patch_list: HashMap<String,Vec<usize>> = HashMap::new();
+
+    for line_res in reader.lines() {
+        let line = line_res?;
+        let trimmed = line.split('#').next().unwrap_or("").trim();
+        if trimmed.is_empty() {
+            continue
+        }
+
+        let pos = instructions.len();
+        if trimmed.ends_with(':') {
+            let label = trimmed.trim_end_matches(':').to_string();
+            labels.insert(label.clone(),pos);
+
+            if let Some(waiting) = patch_list.remove(&label){
+                for idx in waiting {
+                    let offset = pos as i32 - idx as i32;
+                    instructions[idx].patch_label(offset);
+                }
+            }
+            continue;
+        }
+
+        let mut inst = match parse_instruction(trimmed) {
+            Some(inst) => inst,
+            None => continue,
+        };
+
+        let last_token = trimmed
+            .split(|c: char| c.is_whitespace() || c == ',')
+            .filter(|s| !s.is_empty())
+            .last();
+
+        if let Some(label_ref) = last_token {
+            if labels.contains_key(label_ref) {
+                let offset = labels[label_ref] as i32 - pos as i32;
+                inst.patch_label(offset);
+            } else if matches!(inst,
+                Instruction::Beq {..} | Instruction::Bne {..} |
+                Instruction::Blt {..} | Instruction::Bltu {..} |
+                Instruction::Bge {..} | Instruction::Bgeu {..} |
+                Instruction::Jal {..}){
+
+                patch_list.entry(label_ref.to_string()).or_default().push(pos);
+            }
+        }
+        instructions.push(inst);
+    }
+
+    Ok(Program{instructions, labels})
+}

@@ -5,7 +5,7 @@ use riscviz::run_program;
 #[test]
 fn test_branch_not_equal_loop() {
     let mut cpu = Cpu::default();
-    cpu.load_program(vec![
+    cpu.load_instructions(vec![
         Instruction::Addi { rd: 5, rs1: 0, imm: 3 },
         Instruction::Addi { rd: 5, rs1: 5, imm: -1 },
         Instruction::Bne { rs1: 5, rs2: 0, offset: -1 },

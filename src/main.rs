@@ -1,5 +1,5 @@
 use std::io::{self, Write};
-use riscviz::asm_parser::parse_line;
+use riscviz::asm_parser::{load_asm, parse_instruction};
 use riscviz::cpu::Cpu;
 use tabled::{Table, Tabled, settings::Style};
 
@@ -46,6 +46,12 @@ fn print_registers(cpu: &Cpu) {
 
 fn main() {
     let mut cpu = Cpu::default();
+    let args = std::env::args().collect::<Vec<_>>();
+
+    if args.len() == 2 {
+        let program = load_asm(&args[1]).unwrap();
+        cpu.load_program(program);
+    }
 
     loop {
         print!("🐚 > ");
@@ -73,13 +79,20 @@ fn main() {
             match input {
                 "\\d" => print_registers(&cpu),
                 "\\i" => cpu.print_instructions(),
+                "\\f" => {
+                    match cpu.execute_next() {
+                        Ok(true) => println!("[OK]"),
+                        Ok(false) => break,
+                        Err(e) => eprintln!("[ERR] exec: {e}"),
+                    }
+                }
                 "\\q" => break,
                 _ => eprintln!("[ERR] unknown command: {input}"),
             }
             continue;
         }
 
-        let Some(inst) = parse_line(input) else {
+        let Some(inst) = parse_instruction(input) else {
             eprintln!("[ERR] parse error: {input}");
             continue;
         };

@@ -60,3 +60,20 @@ pub enum Instruction {
     // Debug
     Print { rs: usize },
 }
+
+impl Instruction {
+    pub fn patch_label(&mut self, label_offset: i32) {
+        match self {
+            Instruction::Beq { offset, .. }
+            | Instruction::Bne { offset, .. }
+            | Instruction::Blt { offset, .. }
+            | Instruction::Bltu { offset, .. }
+            | Instruction::Bge { offset, .. }
+            | Instruction::Bgeu { offset, .. }
+            | Instruction::Jal { offset, .. } => {
+                *offset = label_offset;
+            }
+            _=> {}
+        }
+    }
+}
